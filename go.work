@@ -1,0 +1,7 @@
+go 1.21.5
+
+use (
+	./go-micro/authentication-service
+	./go-micro/broker-service
+	./go-micro/front-end
+)
