@@ -4,4 +4,5 @@ use (
 	./go-micro/authentication-service
 	./go-micro/broker-service
 	./go-micro/front-end
+	./go-micro/logger-service
 )
