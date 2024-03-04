@@ -28,6 +28,8 @@ type Config struct {
 
 func main() {
 	// connect to mongo
+
+	log.Println("hello inside logger")
 	mongoClient, err := connectToMongo()
 	if err != nil {
 		log.Panic(err)
