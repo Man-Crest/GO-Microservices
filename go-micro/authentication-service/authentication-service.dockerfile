@@ -1,14 +1,14 @@
-FROM golang:latest AS builder
+# FROM golang:latest AS builder
 
-RUN mkdir /app
+# RUN mkdir /app
 
-COPY . /app
+# COPY . /app
 
-WORKDIR /app
+# WORKDIR /app
 
-RUN CGO_ENABLED=0 go build -o authApp ./cmd/api
+# RUN CGO_ENABLED=0 go build -o authApp ./cmd/api
 
-CMD ["/app/authApp"]
+# CMD ["/app/authApp"]
 
 # build i smaller docker image
 FROM alpine:latest

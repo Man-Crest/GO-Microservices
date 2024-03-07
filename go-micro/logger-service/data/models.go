@@ -36,7 +36,7 @@ type LogEntry struct {
 func (l *LogEntry) Insert(entry LogEntry) error {
 	collection := client.Database("logs").Collection("logs")
 
-	_, err := collection.InsertOne(context.TODO(), LogEntry{
+	res, err := collection.InsertOne(context.TODO(), LogEntry{
 		Name:      entry.Name,
 		Data:      entry.Data,
 		CreatedAt: time.Now(),
@@ -46,6 +46,18 @@ func (l *LogEntry) Insert(entry LogEntry) error {
 		log.Println("Error inserting into logs:", err)
 		return err
 	}
+
+	log.Println(res.InsertedID)
+
+	// slice, err := l.All()
+	// if err != nil {
+	// 	log.Println("Error fetching into logs:", err)
+	// 	return err
+	// }
+
+	// for _, i := range slice {
+	// 	log.Println(i)
+	// }
 
 	return nil
 }

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"logger/data"
+	"net"
 	"net/http"
+	"net/rpc"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,8 +17,9 @@ import (
 const (
 	webPort = "80"
 	rpcPort = "5001"
-	// mongoURL = "mongodb://localhost:27017"
+	// mongoURL = "mongodb://127.0.0.1:27017"
 	mongoURL = "mongodb://mongo:27017"
+	// mongoURL = "mongodb://admin:password@localhost:27017/logs"
 	gRpcPort = "50001"
 )
 
@@ -34,11 +37,19 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	client = mongoClient
 
 	// create a context in order to disconnect
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Println("Error pinging server:", err)
+	} else {
+		log.Println("Connected to MongoDB!")
+	}
 
 	// close connection
 	defer func() {
@@ -52,7 +63,14 @@ func main() {
 	}
 
 	// start web server
-	// go app.serve()
+	err = rpc.Register(new(RPCServer))
+	if err != nil {
+		log.Println(err)
+	}
+	go app.rpcListen()
+
+	go app.gRPCListen()
+
 	log.Println("Starting service on port", webPort)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
@@ -61,39 +79,49 @@ func main() {
 
 	err = srv.ListenAndServe()
 	if err != nil {
-		log.Panic()
+		log.Panic(err)
 	}
 
 }
 
-// func (app *Config) serve() {
-// 	srv := &http.Server{
-// 		Addr: fmt.Sprintf(":%s", webPort),
-// 		Handler: app.routes(),
-// 	}
+func (app *Config) rpcListen() {
+	log.Println("starting RPC server on port ", rpcPort)
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
+	if err != nil {
+		log.Println(err)
+	}
+	defer listen.Close()
 
-// 	err := srv.ListenAndServe()
-// 	if err != nil {
-// 		log.Panic()
-// 	}
-// }
+	for {
+		rpcConn, err := listen.Accept()
+		if err != nil {
+			log.Println(err)
+		}
+
+		go rpc.ServeConn(rpcConn)
+	}
+}
 
 func connectToMongo() (*mongo.Client, error) {
-	// create connection options
+	// Set client options
 	clientOptions := options.Client().ApplyURI(mongoURL)
-	clientOptions.SetAuth(options.Credential{
-		Username: "admin",
-		Password: "password",
-	})
 
-	// connect
-	c, err := mongo.Connect(context.TODO(), clientOptions)
+	// Connect to MongoDB
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Println("Error connecting:", err)
-		return nil, err
+		log.Fatal(err)
 	}
 
-	log.Println("Connected to mongo!")
+	// Ping the MongoDB server to check connectivity
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Fatal("Error pinging server:", err)
+	} else {
+		log.Println("Connected to MongoDB!")
+	}
 
-	return c, nil
+	return client, nil
 }

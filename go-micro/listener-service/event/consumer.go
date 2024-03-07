@@ -22,17 +22,16 @@ func NewConsumer(conn *amqp.Connection) (Consumer, error) {
 
 	err := consumer.setup()
 	if err != nil {
-		log.Println(err)
 		return Consumer{}, err
 	}
 
 	return consumer, nil
 }
 
-func (c *Consumer) setup() error {
-	channel, err := c.conn.Channel()
+func (consumer *Consumer) setup() error {
+	channel, err := consumer.conn.Channel()
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	return declareExchange(channel)
@@ -43,12 +42,11 @@ type Payload struct {
 	Data string `json:"data"`
 }
 
-func (c *Consumer) Listen(topics []string) error {
-	ch, err := c.conn.Channel()
+func (consumer *Consumer) Listen(topics []string) error {
+	ch, err := consumer.conn.Channel()
 	if err != nil {
-		log.Println(err)
+		return err
 	}
-
 	defer ch.Close()
 
 	q, err := declareRandomQueue(ch)
@@ -60,7 +58,7 @@ func (c *Consumer) Listen(topics []string) error {
 		ch.QueueBind(
 			q.Name,
 			s,
-			"logic_topics",
+			"logs_topic",
 			false,
 			nil,
 		)
@@ -70,27 +68,22 @@ func (c *Consumer) Listen(topics []string) error {
 		}
 	}
 
-	message, err := ch.Consume(
-		q.Name, "", true, false, false, false, nil,
-	)
+	messages, err := ch.Consume(q.Name, "", true, false, false, false, nil)
 	if err != nil {
 		return err
 	}
 
 	forever := make(chan bool)
-
 	go func() {
-		for d := range message {
+		for d := range messages {
 			var payload Payload
-
 			_ = json.Unmarshal(d.Body, &payload)
 
 			go handlePayload(payload)
 		}
 	}()
 
-	fmt.Printf("waiting for message [Exchang, Queue] [logs_topic, %s]\n", q.Name)
-
+	fmt.Printf("Waiting for message [Exchange, Queue] [logs_topic, %s]\n", q.Name)
 	<-forever
 
 	return nil

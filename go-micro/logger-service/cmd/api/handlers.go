@@ -11,11 +11,31 @@ type JSONPayload struct {
 	Data string `json:"data"`
 }
 
+func (app *Config) AllData(w http.ResponseWriter, r *http.Request) {
+
+	log.Println("inside alldata logs")
+	data, err := app.Models.LogEntry.All()
+	if err != nil {
+		log.Println(err, "error reading log")
+	}
+
+	for i, val := range data {
+		log.Println(i, val.Data)
+		err = app.writeJSON(w, http.StatusAccepted, val.Data)
+		if err != nil {
+			log.Println(err, "error writing log")
+		}
+	}
+
+}
+
 func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 	// read json into var
 	var requestPayload JSONPayload
 	err := app.readJSON(w, r, &requestPayload)
 
+	log.Println(requestPayload.Name)
+	log.Println(requestPayload.Data)
 	if err != nil {
 		log.Println(err, "error reading log")
 	}
