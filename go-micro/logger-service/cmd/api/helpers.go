@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -37,6 +38,7 @@ func (app *Config) readJSON(w http.ResponseWriter, r *http.Request, data any) er
 func (app *Config) writeJSON(w http.ResponseWriter, status int, data any, headers ...http.Header) error {
 	out, err := json.Marshal(data)
 	if err != nil {
+		log.Println(err, "error marshaling json")
 		return err
 	}
 
@@ -46,10 +48,13 @@ func (app *Config) writeJSON(w http.ResponseWriter, status int, data any, header
 		}
 	}
 
+	log.Println(string(out))
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err = w.Write(out)
 	if err != nil {
+		log.Println(err, "error writing it to response")
 		return err
 	}
 

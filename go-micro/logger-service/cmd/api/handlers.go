@@ -13,20 +13,24 @@ type JSONPayload struct {
 
 func (app *Config) AllData(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("inside alldata logs")
 	data, err := app.Models.LogEntry.All()
 	if err != nil {
 		log.Println(err, "error reading log")
 	}
 
-	for i, val := range data {
-		log.Println(i, val.Data)
-		err = app.writeJSON(w, http.StatusAccepted, val.Data)
-		if err != nil {
-			log.Println(err, "error writing log")
-		}
+	// err = app.errorJSON(w, errors.New("sdgnsdjhfbgndfjk"), http.StatusBadRequest)
+	// resp := "this is response string"
+	resp := jsonResponse{
+		Error:   false,
+		Message: "showed",
+		Data:    data,
 	}
-
+	err = app.writeJSON(w, http.StatusAccepted, resp)
+	if err != nil {
+		app.errorJSON(w, err)
+		log.Println(err)
+		return
+	}
 }
 
 func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
@@ -34,8 +38,6 @@ func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 	var requestPayload JSONPayload
 	err := app.readJSON(w, r, &requestPayload)
 
-	log.Println(requestPayload.Name)
-	log.Println(requestPayload.Data)
 	if err != nil {
 		log.Println(err, "error reading log")
 	}
@@ -58,5 +60,10 @@ func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 		Message: "logged",
 	}
 
-	app.writeJSON(w, http.StatusAccepted, resp)
+	err = app.writeJSON(w, http.StatusAccepted, resp)
+	if err != nil {
+		app.errorJSON(w, err)
+		log.Println(err)
+		return
+	}
 }

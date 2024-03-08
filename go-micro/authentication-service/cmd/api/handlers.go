@@ -15,8 +15,6 @@ type AuthPayload struct {
 
 func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("inside auth handler func")
-
 	requestPayload := &AuthPayload{}
 
 	err := json.NewDecoder(r.Body).Decode(&requestPayload)

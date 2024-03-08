@@ -25,8 +25,6 @@ func (l *LogServer) WriteLog(ctx context.Context, req *logs.LogRequest) (*logs.L
 		Data: input.Data,
 	}
 
-	log.Println(logEntry)
-
 	err := l.Models.LogEntry.Insert(logEntry)
 	if err != nil {
 		res := &logs.LogResponse{Result: "failed"}

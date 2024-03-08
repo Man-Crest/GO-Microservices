@@ -48,12 +48,11 @@
     let showBtn = document.getElementById("showBtn");
 
     showBtn.addEventListener("click", function() {
-
         const payload = {
             action: "show",
             log: {
                 name: "event",
-                data: "Some kind of data",
+                data: "Some kind of show data",
             }
         }
 
@@ -61,16 +60,15 @@
         headers.append("Content-Type", "application/json");
 
         const body = {
-            method: 'POST',
-            body: JSON.stringify(payload),
+            method: "GET",
             headers: headers,
         }
 
         fetch("http:\/\/localhost:8080/handle", body)
         .then((response) => response.json())
         .then((data) => {
-            sent.innerHTML = JSON.stringify(payload, undefined, 4);
             received.innerHTML = JSON.stringify(data, undefined, 4);
+            console.log(data)
             if (data.error) {
                 output.innerHTML += `<br><strong>Error:</strong> ${data.message}`;
             } else {
@@ -79,7 +77,7 @@
         })
         .catch((error) => {
             output.innerHTML += "<br><br>Error: " + error;
-        })
+        })        
     })
 
     mailBtn.addEventListener("click", function() {
@@ -142,6 +140,7 @@
         .then((data) => {
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
             received.innerHTML = JSON.stringify(data, undefined, 4);
+            console.log(data)
             if (data.error) {
                 output.innerHTML += `<br><strong>Error:</strong> ${data.message}`;
             } else {
@@ -174,6 +173,7 @@
         fetch("http:\/\/localhost:8080/handle", body)
         .then((response) => response.json())
         .then((data) => {
+            console.log(data)
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
             received.innerHTML = JSON.stringify(data, undefined, 4);
             if (data.error) {

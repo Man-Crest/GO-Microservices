@@ -1,0 +1,69 @@
+version: '3'
+
+# NOTE: for all of the images for the 5 microservices, you'll
+# have to change the image: <name> part to whatever your image names are
+
+services:
+
+  front-end:
+    image: manmanavadaria/front-end:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  broker-service:
+    image: manmanavadaria/broker-service:1.0.0
+    ports:
+      - "8080:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  listener-service:
+    image: manmanavadaria/listener-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  authentication-service:
+    image: manmanavadaria/authentication-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "host=postgres port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC connect_timeout=5"
+
+  logger-service:
+    image: manmanavadaria/logger-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  rabbitmq:
+    image: 'rabbitmq:latest'
+    deploy:
+      mode: global
+
+  mongo:
+    image: 'mongo:latest'
+    ports:
+      - "27017:27017"
+    deploy:
+      mode: global
+    volumes:
+      - ./db-data/mongo/:/data/db
+
+  postgres:
+    image: 'postgres:latest'
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/

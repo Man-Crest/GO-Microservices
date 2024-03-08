@@ -30,6 +30,8 @@ services:
     build:
       context: ./../logger-service
       dockerfile: ./../logger-service/logger-service.dockerfile
+    ports:
+      - "8090:80"
     restart: always
     deploy:
       mode: replicated

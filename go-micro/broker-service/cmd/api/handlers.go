@@ -22,7 +22,6 @@ func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
 		Message: "Hit the broker",
 	}
 
-	log.Println("inside broker handler")
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
@@ -44,39 +43,30 @@ type AuthPayload struct {
 
 func (app *Config) HandleSubmittion(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("inside handlesubmit function")
 	var requestPayload RequestPayload
 
 	err := app.readJSON(w, r, &requestPayload)
 
 	if err != nil {
-		log.Println("1")
 		app.errorJSON(w, err)
 		return
 	}
-
-	log.Println(requestPayload.Action)
-	log.Println(requestPayload.Log.Data)
 
 	switch requestPayload.Action {
 	case "auth":
 		app.authenticate(w, requestPayload.Auth)
 	case "log":
 		app.LogViaRpc(w, requestPayload.Log)
-	case "show":
-		app.ShowData(w)
 	default:
 		app.errorJSON(w, errors.New("unkown action fetched"), http.StatusUnauthorized)
 	}
 }
 
 func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
-	log.Println("inside authentication switch func")
 	jsonData, _ := json.Marshal(a)
 
 	// request, err := http.NewRequest("POST", "http://localhost:8081/authenticate", bytes.NewBuffer(jsonData))
 	request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
-	log.Println(request)
 	if err != nil {
 		app.errorJSON(w, err)
 		return
@@ -154,9 +144,7 @@ func (app *Config) logItem(w http.ResponseWriter, entry LogPayload) {
 
 	app.writeJSON(w, http.StatusAccepted, payload)
 }
-func (app *Config) ShowData(w http.ResponseWriter) {
-
-	log.Println("inside showData function")
+func (app *Config) ShowData(w http.ResponseWriter, r *http.Request) {
 
 	jsonData := []byte{} // Empty JSON data, assuming no data to send in the request body
 	logServiceURL := "http://logger-service/all"
@@ -182,12 +170,20 @@ func (app *Config) ShowData(w http.ResponseWriter) {
 
 	if response.StatusCode != http.StatusAccepted {
 		errMsg := fmt.Errorf("unexpected status code: %d", response.StatusCode)
-		// log.Printf("error response from server: %s", errMsg)
+		log.Printf("error response from server: %s", errMsg)
 		app.errorJSON(w, errMsg)
 		return
 	}
 
-	// Process response body if needed
+	var jsonFromService jsonResponse
+
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusAccepted, jsonFromService)
 }
 
 type RPCPayload struct {
@@ -196,7 +192,6 @@ type RPCPayload struct {
 }
 
 func (app *Config) LogViaRpc(w http.ResponseWriter, l LogPayload) {
-	log.Println("inside log via RPC")
 	client, err := rpc.Dial("tcp", "logger-service:5001")
 
 	if err != nil {
@@ -235,9 +230,6 @@ func (app *Config) LogViaGRPC(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, err)
 		return
 	}
-
-	log.Println(requestPayload)
-
 	conn, err := grpc.Dial("logger-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.errorJSON(w, err)
