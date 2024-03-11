@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -46,30 +47,10 @@ func main() {
 	}
 }
 
-// func NewDatabase() (*sql.DB, error) {
-
-// 	dsn := os.Getenv("DSN")
-
-// 	// dsn := "host=postgres port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC connect_timeout=5"
-
-// 	db, err := sql.Open("postgres", dsn)
-// 	if err != nil {
-// 		log.Println("error at sql.Open")
-// 		return nil, err
-// 	}
-
-// 	if err = db.Ping(); err != nil {
-// 		log.Println("error at Ping()")
-// 		return nil, err
-// 	}
-
-// 	return db, nil
-// }
-
 func ConnectDB() (*sql.DB, error) {
 	// Define PostgreSQL connection string
-	connStr := "host=postgres port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC"
-
+	// connStr := "host=postgres port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC"
+	connStr := os.Getenv("DSN")
 	// Open a connection to the PostgreSQL database
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
